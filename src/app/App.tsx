@@ -78,6 +78,7 @@ import {
 } from "@/modules/terminal";
 import { ThemeProvider } from "@/modules/theme";
 import { UpdaterDialog } from "@/modules/updater";
+import { WindowResizeEdges } from "@/components/WindowResizeEdges";
 import {
   getWslHome,
   LOCAL_WORKSPACE,
@@ -1210,6 +1211,7 @@ export default function App() {
     <ThemeProvider>
       <TooltipProvider>
         <div className="relative flex h-screen flex-col overflow-hidden bg-background text-foreground">
+          <WindowResizeEdges />
           <Header
             tabs={tabs}
             activeId={activeId}
