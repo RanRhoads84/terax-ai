@@ -142,8 +142,8 @@ export const DEFAULT_PREFERENCES: Preferences = {
   themeId: DEFAULT_THEME_ID,
   backgroundKind: "none",
   backgroundImageId: null,
-  backgroundOpacity: 0.7,
-  backgroundBlur: 16,
+  backgroundOpacity: 0.5,
+  backgroundBlur: 0,
   defaultModelId: DEFAULT_MODEL_ID,
   editorTheme: "atomone",
   customInstructions: "",
@@ -462,13 +462,11 @@ export async function setZoomLevel(value: number): Promise<void> {
 export async function setShortcuts(
   value: Record<ShortcutId, KeyBinding[]> | {},
 ): Promise<void> {
-  await store.set(KEY_SHORTCUTS, value);
-  await store.save();
+  await writePref(KEY_SHORTCUTS, value);
 }
 
 export async function resetShortcuts(): Promise<void> {
-  await store.set(KEY_SHORTCUTS, DEFAULT_PREFERENCES.shortcuts);
-  await store.save();
+  await writePref(KEY_SHORTCUTS, DEFAULT_PREFERENCES.shortcuts);
 }
 
 export type PrefKey = keyof Preferences;

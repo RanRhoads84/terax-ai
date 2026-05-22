@@ -147,6 +147,9 @@ fn is_usable_launch_dir(path: &Path) -> bool {
     if !path.is_dir() || path == Path::new("/") {
         return false;
     }
+    if is_executable_dir(path) {
+        return false;
+    }
     let s = path.to_string_lossy();
     if s.contains(".app/Contents/") {
         return false;
@@ -155,6 +158,19 @@ fn is_usable_launch_dir(path: &Path) -> bool {
         return false;
     }
     true
+}
+
+fn is_executable_dir(path: &Path) -> bool {
+    let Ok(exe) = std::env::current_exe() else {
+        return false;
+    };
+    let Some(exe_dir) = exe.parent() else {
+        return false;
+    };
+    match (std::fs::canonicalize(path), std::fs::canonicalize(exe_dir)) {
+        (Ok(a), Ok(b)) => a == b,
+        _ => false,
+    }
 }
 
 #[derive(Clone, Debug, Default, Deserialize)]
@@ -305,10 +321,10 @@ fn looks_utf16le(bytes: &[u8]) -> bool {
 
 #[cfg(windows)]
 fn run_wsl(args: &[&str]) -> Result<String, String> {
-    let out = std::process::Command::new("wsl.exe")
-        .args(args)
-        .output()
-        .map_err(|e| e.to_string())?;
+    let mut cmd = std::process::Command::new("wsl.exe");
+    cmd.args(args);
+    crate::modules::proc::hide_console(&mut cmd);
+    let out = cmd.output().map_err(|e| e.to_string())?;
     if !out.status.success() {
         let stderr = decode_command_output(&out.stderr);
         return Err(stderr.trim().to_string());
@@ -323,14 +339,10 @@ pub(crate) fn wsl_exec_capture(
     args: &[&str],
 ) -> Result<String, String> {
     validate_wsl_distro_name(distro)?;
-    let out = std::process::Command::new("wsl.exe")
-        .arg("-d")
-        .arg(distro)
-        .arg("--exec")
-        .arg(program)
-        .args(args)
-        .output()
-        .map_err(|e| e.to_string())?;
+    let mut cmd = std::process::Command::new("wsl.exe");
+    cmd.arg("-d").arg(distro).arg("--exec").arg(program).args(args);
+    crate::modules::proc::hide_console(&mut cmd);
+    let out = cmd.output().map_err(|e| e.to_string())?;
     if !out.status.success() {
         let stderr = decode_command_output(&out.stderr);
         return Err(stderr.trim().to_string());
